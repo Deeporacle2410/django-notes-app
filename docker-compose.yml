@@ -12,6 +12,7 @@ services:
       - django_app
     networks:
       - notes-app-nw
+    whoami
 
   django_app:
     build:
