@@ -41,10 +41,12 @@ pipeline {
 
         stage("Deploy") {
             steps {
+                echo "this is deploying the container"
                 sh """
                 docker rm -f notes-app-container || true
                 docker run -d -p 8000:8000 --name notes-app-container notes-app:latest
                 """
+                sh "docker compose down && docker compose up -d"
             }
         }
     }
