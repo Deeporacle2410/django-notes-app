@@ -1,0 +1,51 @@
+@Library("Shared") _
+pipeline {
+    agent { label 'vinod' }
+    stages {
+        
+        stage("Hello"){
+            steps{
+                script{
+                    hello()
+                }
+            }
+        }
+        
+        stage("Clone Code") {
+            steps {
+                echo "cloning complted succesfully jen"
+                script{
+                    
+                    clone()
+                }
+            }
+        }
+
+        stage("Build Image") {
+            steps {
+                // We build FIRST so the image exists to be pushed
+                sh "docker build -t notes-app:latest ."
+            }
+        }
+
+        stage("Push to Docker Hub") {
+            steps {
+                // Ensure ID 'dockerHubcred' exists in Jenkins Credentials
+                withCredentials([usernamePassword(credentialsId: "dockerHubCred", passwordVariable: "dockerHubPass", usernameVariable: "dockerHubUser")]) {
+                    sh "docker login -u ${dockerHubUser} -p ${dockerHubPass}"
+                    sh "docker tag notes-app:latest ${dockerHubUser}/notes-app:latest"
+                    sh "docker push ${dockerHubUser}/notes-app:latest"
+                }   
+            }
+        }
+
+        stage("Deploy") {
+            steps {
+                sh """
+                docker rm -f notes-app-container || true
+                docker run -d -p 8000:8000 --name notes-app-container notes-app:latest
+                """
+            }
+        }
+    }
+}
